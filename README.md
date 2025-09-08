@@ -3,8 +3,8 @@
 ## 👥 Integrantes del grupo
 - Díaz Jeremías  
 - Crowley Pedro  
-- Juan Meunier  
-
+- Meunier Juan 
+- Arrue Rodrigo 
 ---
 
 ## 📌 Trabajo Práctico 1: UML
