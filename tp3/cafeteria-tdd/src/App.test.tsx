@@ -20,20 +20,22 @@ describe('Cafetería TDD', () => {
     expect(screen.getByText('Croissant')).toBeInTheDocument();
   });
 
-  test('HU2: agrega producto al pedido', async () => {
-    const user = userEvent.setup();
-    render(<App />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Café')).toBeInTheDocument();
-    });
-    
-    const addButtons = screen.getAllByRole('button', { name: /agregar/i });
-    await user.click(addButtons[0]);
-    
-    expect(screen.getByText(/café/i)).toBeInTheDocument();
-    expect(screen.getByText(/x1/i)).toBeInTheDocument();
+test('HU2: agrega producto al pedido', async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  
+  await waitFor(() => {
+    expect(screen.getByText('Café')).toBeInTheDocument();
   });
+  
+  const addButtons = screen.getAllByRole('button', { name: /agregar/i });
+  await user.click(addButtons[0]);
+  
+  // Buscar dentro del contenedor "Tu Pedido"
+  const pedidoSection = screen.getByText('Tu Pedido').closest('div');
+  expect(pedidoSection).toHaveTextContent(/café/i);
+  expect(pedidoSection).toHaveTextContent(/x1/i);
+});
 
   test('HU3: calcula el total correctamente', async () => {
     const user = userEvent.setup();
