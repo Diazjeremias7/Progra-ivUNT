@@ -1,3 +1,13 @@
+# Progra-ivUNT
+
+## 👥 Integrantes del grupo
+- Díaz Jeremías  
+- Crowley Pedro  
+- Meunier Juan 
+- Arrue Rodrigo 
+---
+
+
 # Aplicación Vulnerable - Práctica de Seguridad Web
 
 Esta aplicación ha sido diseñada específicamente para enseñar sobre vulnerabilidades comunes en aplicaciones web. **NO DEBE SER USADA EN PRODUCCIÓN**.
