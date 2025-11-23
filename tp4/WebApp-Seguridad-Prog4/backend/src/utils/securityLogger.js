@@ -41,15 +41,16 @@ const logSecurityEvent = (eventType, details) => {
  */
 const detectSuspiciousInput = (input, type = 'unknown') => {
   const suspiciousPatterns = [
-    /[;&|`$()]/,           
-    /\.\.[\/\\]/,       
-    /'.*OR.*'/i,          
-    /<script/i,           
-    /exec\s*\(/i,         
-    /system\s*\(/i,       
-    /eval\s*\(/i         
+  /[;&|`$()]/,            // Command injection
+  /\.\.[\/\\]/,           // Path traversal
+  /'.*OR.*'/i,            // SQL injection
+  /<script/i,             // XSS
+  /exec\s*\(/i,           // Code injection
+  /system\s*\(/i,         // System calls
+  /eval\s*\(/i            // Eval injection
   ];
-  
+
+
   const detectedPatterns = [];
   
   suspiciousPatterns.forEach((pattern, index) => {
