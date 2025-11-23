@@ -14,28 +14,51 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 class ApiService {
   private api: AxiosInstance;
+  private csrfToken: string | null = null;
 
   constructor() {
     this.api = axios.create({
       baseURL: API_URL,
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      withCredentials: true // Importante para enviar cookies
     });
 
-    // Interceptor para agregar el token a las peticiones
+    // Interceptor para agregar el token JWT a las peticiones
     this.api.interceptors.request.use((config) => {
       const token = localStorage.getItem('token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+      // Agregar CSRF token si está disponible y es una petición que lo necesita
+      if (this.csrfToken && ['post', 'put', 'delete', 'patch'].includes(config.method?.toLowerCase() || '')) {
+        config.headers['X-CSRF-Token'] = this.csrfToken;
+        config.headers['CSRF-Token'] = this.csrfToken;
+      }
+
       return config;
     });
+  }
+
+  // Obtener token CSRF
+  async getCsrfToken(): Promise<string> {
+    try {
+      const response = await this.api.get<{ csrfToken: string }>('/api/csrf-token');
+      this.csrfToken = response.data.csrfToken;
+      return this.csrfToken;
+    } catch (error) {
+      console.error('Error obteniendo CSRF token:', error);
+      throw error;
+    }
   }
 
   // Autenticación
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await this.api.post<AuthResponse>('/api/login', credentials);
+    // Obtener CSRF token después del login
+    await this.getCsrfToken();
     return response.data;
   }
 
@@ -46,6 +69,10 @@ class ApiService {
 
   async verifyToken(): Promise<{ valid: boolean; user: User }> {
     const response = await this.api.post<{ valid: boolean; user: User }>('/api/auth/verify');
+    // Obtener CSRF token si la verificación es exitosa
+    if (response.data.valid) {
+      await this.getCsrfToken();
+    }
     return response.data;
   }
 
@@ -61,8 +88,12 @@ class ApiService {
     return response.data;
   }
 
-  // Vulnerabilidad: CSRF
+  // Vulnerabilidad: CSRF - AHORA PROTEGIDO
   async transfer(data: TransferData): Promise<{ message: string }> {
+    // Asegurarse de tener token CSRF antes de transferir
+    if (!this.csrfToken) {
+      await this.getCsrfToken();
+    }
     const response = await this.api.post<{ message: string }>('/api/transfer', data);
     return response.data;
   }
@@ -75,18 +106,23 @@ class ApiService {
 
   // Vulnerabilidad: File Inclusion
   async readFile(filename: string): Promise<string> {
-    const response = await this.api.get<string>('/api/file', { 
+    const response = await this.api.get<string>('/api/file', {
       params: { filename },
       responseType: 'text' as any
     });
     return response.data;
   }
 
-  // Vulnerabilidad: File Upload
+  // Vulnerabilidad: File Upload - AHORA PROTEGIDO
   async uploadFile(file: File): Promise<UploadResponse> {
+    // Asegurarse de tener token CSRF antes de subir
+    if (!this.csrfToken) {
+      await this.getCsrfToken();
+    }
+
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await this.api.post<UploadResponse>('/api/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'

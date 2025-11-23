@@ -1,18 +1,35 @@
 const express = require('express');
-const router = express.Router();
 const vulnerabilityController = require('../controllers/vulnerabilityController');
 const { uploadMiddleware, uploadFile } = require('../controllers/uploadController');
+const { validateOrigin } = require('../middleware/csrfValidation');
 
-// Command Injection
-router.post('/ping', vulnerabilityController.ping);
+// Función que recibe csrfProtection como parámetro
+const configureRoutes = (csrfProtection) => {
+    const router = express.Router();
 
-// CSRF - Transferencia
-router.post('/transfer', vulnerabilityController.transfer);
+    // Command Injection - sin CSRF (es GET-like)
+    router.post('/ping', vulnerabilityController.ping);
 
-// Local File Inclusion
-router.get('/file', vulnerabilityController.readFile);
+    // CSRF - Transferencia AHORA CON PROTECCIÓN
+    router.post(
+        '/transfer',
+        validateOrigin,        // Validar origen
+        csrfProtection,        // Token CSRF
+        vulnerabilityController.transfer
+    );
 
-// File Upload
-router.post('/upload', uploadMiddleware, uploadFile);
+    // Local File Inclusion - sin CSRF (es GET)
+    router.get('/file', vulnerabilityController.readFile);
 
-module.exports = router;
+    // File Upload - con CSRF para mayor seguridad
+    router.post(
+        '/upload',
+        csrfProtection,
+        uploadMiddleware,
+        uploadFile
+    );
+
+    return router;
+};
+
+module.exports = configureRoutes;
