@@ -1,5 +1,4 @@
 const express = require('express');
-const router = express.Router();
 
 // Importar todas las rutas
 const authRoutes = require('./auth');
@@ -7,15 +6,22 @@ const productRoutes = require('./products');
 const vulnerabilityRoutes = require('./vulnerabilities');
 const captchaRoutes = require('./captcha');
 
-// Usar las rutas
-router.use('/', authRoutes);
-router.use('/', productRoutes);
-router.use('/', vulnerabilityRoutes);
-router.use('/', captchaRoutes);
+// Función para configurar rutas con CSRF protection opcional
+const configureRoutes = (csrfProtection) => {
+  const router = express.Router();
 
-// Ruta de prueba
-router.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'API funcionando correctamente' });
-});
+  // Usar las rutas (algunas sin CSRF, otras con CSRF)
+  router.use('/', authRoutes);
+  router.use('/', productRoutes);
+  router.use('/', vulnerabilityRoutes(csrfProtection)); // Pasar CSRF a vulnerabilities
+  router.use('/', captchaRoutes);
 
-module.exports = router;
+  // Ruta de prueba
+  router.get('/health', (req, res) => {
+    res.json({ status: 'OK', message: 'API funcionando correctamente' });
+  });
+
+  return router;
+};
+
+module.exports = configureRoutes;
