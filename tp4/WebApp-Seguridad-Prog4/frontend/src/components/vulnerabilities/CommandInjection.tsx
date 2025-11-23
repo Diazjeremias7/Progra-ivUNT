@@ -25,7 +25,7 @@ const CommandInjection: React.FC = () => {
       const errorData = error.response?.data;
       setError(errorData?.error || 'Error al ejecutar ping');
       
-      // Mostrar detalles si están disponibles
+      // Mostrar detalles si están disponibless
       if (errorData?.details && Array.isArray(errorData.details)) {
         setError(prev => `${prev}\\n${errorData.details.join('\\n')}`);
       }
