@@ -1,8 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
+const { validateProductSearch } = require('../middleware/validators');
+const { productSearchLimiter } = require('../middleware/rateLimiters');
 
-// Ruta de productos (vulnerable a SQL injection)
-router.get('/products', productController.getProducts);
+router.get(
+  '/products', 
+  productSearchLimiter,
+  validateProductSearch, 
+  productController.getProducts
+);
 
 module.exports = router;

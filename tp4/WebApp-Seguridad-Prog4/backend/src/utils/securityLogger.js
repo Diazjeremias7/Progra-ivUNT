@@ -95,9 +95,52 @@ const logAccessDenied = (req, reason, resource) => {
   });
 };
 
+const logSqlInjectionAttempt = (req, params) => {
+  const { category, search } = params;
+  
+  // Patrones sospechosos de SQL injection
+  const sqlPatterns = [
+    /('|--|\*|\/\*|\*\/|;|union|select|insert|update|delete|drop|create|alter|exec|execute)/i,
+    /(or\s+\d+\s*=\s*\d+|and\s+\d+\s*=\s*\d+)/i,
+    /(\bor\b|\band\b).*('|")/i
+  ];
+  
+  let suspicious = false;
+  const detectedPatterns = [];
+  
+  [category, search].forEach((param) => {
+    if (param) {
+      sqlPatterns.forEach((pattern, index) => {
+        if (pattern.test(param)) {
+          suspicious = true;
+          detectedPatterns.push({
+            param,
+            patternIndex: index
+          });
+        }
+      });
+    }
+  });
+  
+  if (suspicious) {
+    logSecurityEvent('SQL_INJECTION_ATTEMPT', {
+      ip: req.ip || req.connection.remoteAddress,
+      userAgent: req.get('user-agent'),
+      category,
+      search,
+      detectedPatterns,
+      endpoint: req.path,
+      method: req.method
+    });
+  }
+  
+  return suspicious;
+};
+
 module.exports = {
   logSecurityEvent,
   detectSuspiciousInput,
   logCommandInjectionAttempt,
-  logAccessDenied
+  logAccessDenied,
+  logSqlInjectionAttempt  
 };
